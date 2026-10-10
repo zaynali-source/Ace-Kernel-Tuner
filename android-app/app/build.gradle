@@ -1,0 +1,13 @@
+plugins { id 'com.android.application' }
+
+android {
+    namespace 'com.zaynali.acetuner'
+    compileSdk 35
+    defaultConfig {
+        applicationId 'com.zaynali.acetuner'
+        minSdk 26
+        targetSdk 33
+        versionCode 1
+        versionName '1.0'
+    }
+}
