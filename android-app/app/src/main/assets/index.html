@@ -1,0 +1,17 @@
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Ace Tuner V1</title><style>
+:root{color-scheme:dark}body{margin:0;padding:18px;background:#10141a;color:#e8edf3;font:15px system-ui}h1{color:#ffb454;font-size:24px}section{background:#1a212b;border-radius:14px;padding:16px;margin:12px 0}button,select,input{font:inherit;border-radius:9px;padding:10px;background:#273342;color:#fff;border:1px solid #465366}button{cursor:pointer}small{color:#aab5c3}pre{white-space:pre-wrap;overflow-wrap:anywhere;color:#c9d6e4}label{display:block;margin:12px 0}button.primary{background:#ffb454;color:#16191e;font-weight:700}</style></head><body>
+<h1>ACE TUNER V1</h1><small>POCO F6 · Snapdragon 8s Gen 3 · KernelSU required</small>
+<section><h3>Module status</h3><button class="primary" onclick="status()">Refresh status</button><pre id="out">Tap refresh to read the installed module.</pre></section>
+<section><h3>Governor</h3><label><select id="gov"><option value="vorpal">Vorpal</option><option value="walt">WALT</option></select></label><button onclick="set('GOV',document.getElementById('gov').value)">Save governor</button><p><small>Only select a governor supported by your installed kernel.</small></p></section>
+<section><h3>Module switches</h3><div id="switches"></div><button class="primary" onclick="apply()">Save switches</button></section>
+<section><h3>Charging current</h3><label><input type="checkbox" id="chg"> Enable module charging-current target</label><label><input type="range" id="ma" min="500" max="6000" step="500" value="1500" oninput="val.textContent=this.value+' mA'"><span id="val">1500 mA</span></label><button onclick="set('CHG_EN',chg.checked?1:0);set('CHG_MA',ma.value)">Save charging settings</button><p><small>Hardware/kernel support varies. Use conservative values; this does not guarantee charging current.</small></p></section>
+<script>
+const M='/data/adb/modules/cpufreq_max_cap/cfg.sh';
+const keys=[['CAP','Max frequency cap'],['RATE','Rate limits'],['TGAME','Thermal profile handling'],['MINLOCK','Power HAL min-frequency block'],['KLOG','Kernel logs/debug'],['GM','Gaming mode'],['BOOST','High-speed boost'],['HL','Hispeed load'],['HEAD','Headroom/threshold']];
+switches.innerHTML=keys.map(([k,n])=>'<label><input type="checkbox" id="'+k+'"> '+n+'</label>').join('');
+function sh(c){return new Promise((resolve,reject)=>{if(!window.ksu){reject(Error('Root bridge unavailable'));return}let cb='cb'+Date.now()+Math.random().toString(36).slice(2);window[cb]=(e,o)=>{delete window[cb];e?reject(Error(o)):resolve(o||'')};try{ksu.exec(c,'{}',cb)}catch(e){reject(e)}})}
+async function status(){try{out.textContent=await sh('sh '+M+' status');}catch(e){out.textContent='Could not read module. Grant root permission in KernelSU and confirm cpufreq_max_cap is installed.\n'+e}}
+async function set(k,v){try{await sh('sh '+M+' set '+k+' '+v);out.textContent=k+' saved. The module applies settings in the background.'}catch(e){out.textContent='Failed to save '+k+': '+e}}
+async function apply(){for(const [k] of keys){await set(k,document.getElementById(k).checked?1:0)}}
+status();
+</script></body></html>
